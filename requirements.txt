@@ -1,0 +1,88 @@
+# ─────────────────────────────────────────────────────────────
+# F.R.I.D.A.Y. — requirements.txt
+# Install: pip install -r requirements.txt
+# ─────────────────────────────────────────────────────────────
+
+# Core
+python-dotenv>=1.0.0
+asyncio-throttle>=1.0.2
+keyring>=25.0.0         # OS credential store — memory DB encryption key only
+                        # (API keys live in .env; see config.py)
+cryptography>=42.0.0    # Memory DB at-rest encryption
+
+# LLM providers
+openai>=1.30.0          # NVIDIA NIM (uses the OpenAI-compatible SDK)
+litellm>=1.60.0         # Model Router's FAST tier only (brain/model_router.py) —
+                        # talks to arbitrary OpenAI-compatible endpoints
+google-genai>=1.0.0     # Gemini — the current unified SDK (import: from google import genai).
+                        # NOT google-generativeai — that package is fully
+                        # end-of-life as of Nov 30, 2025 and uses a
+                        # different import path (google.generativeai),
+                        # which nothing in this codebase uses.
+ollama>=0.2.0           # Local Ollama
+groq>=0.9.0             # Intent router (optional)
+pydantic>=2.0            # Schema validation for intent classification
+
+# STT — Whisper on CUDA
+faster-whisper>=1.0.0
+# CUDA DLLs (Windows): pip install nvidia-cublas-cu12 nvidia-cudnn-cu12
+
+# TTS
+elevenlabs>=1.0.0       # Primary TTS
+edge-tts>=6.1.9         # Fallback TTS (no API key needed)
+
+# Audio
+sounddevice>=0.4.6
+webrtcvad-wheels>=2.0.10
+# numpy and pillow: pinned loosely — aider-chat 0.86.x pins these tightly
+# but the versions below work fine with FRIDAY and don't conflict.
+numpy>=1.26.0
+pillow>=10.3.0
+pyaudio>=0.2.14
+pydub>=0.25.1
+
+# Wake word (optional — for --wake mode)
+openwakeword>=0.6.0
+
+# System control
+pyautogui>=0.9.54
+pywin32>=306; sys_platform == "win32"  # Spotify window focus in handlers.py
+pycaw>=20240210         # Windows volume control
+screen-brightness-control>=0.23.0
+mss>=9.0.1              # Screenshots
+psutil>=5.9.8           # CPU/RAM/battery monitoring
+
+# Memory (FAISS semantic retrieval — optional, degrades gracefully)
+faiss-cpu>=1.7.4
+sentence-transformers>=2.7.0
+
+# Browser / Web
+ddgs>=6.0.0
+playwright>=1.44.0      # Advanced browser control (optional)
+
+# File processing
+pypdf2>=3.0.0
+python-docx>=1.1.0
+openpyxl>=3.1.2
+pillow>=10.3.0
+
+# Video / Audio processing
+moviepy>=1.0.3
+whisper-timestamped>=1.14.0  # Audio transcription for file_processor
+
+# Media
+spotipy>=2.23.0         # Spotify API (optional)
+yt-dlp>=2024.5.27       # YouTube download (optional)
+
+# Google OAuth (Calendar + Gmail foundation — actions/google_auth.py)
+google-auth>=2.29.0
+google-auth-oauthlib>=1.2.0
+google-api-python-client>=2.126.0
+tzlocal>=5.2  # actions/calendar.py — local timezone for created events
+
+# Utilities
+send2trash>=1.8.3       # Safe file deletion
+pyperclip>=1.8.2        # Clipboard
+websockets>=12.0        # UI <-> backend communication
+aiohttp>=3.9.5
+requests>=2.31.0        # Tavily/Exa search APIs, Fish Audio TTS, ElevenLabs quota check
