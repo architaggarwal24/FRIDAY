@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src ws://localhost:8765; font-src 'self' data:;" />
+<title>Focus</title>
+<!--
+  F.R.I.D.A.Y. — ui/card.html
+  The always-on-top focus card.
+
+  Deliberately NOT part of the React bundle: it's a second
+  BrowserWindow that needs to stay up while the main window is hidden
+  or minimised to tray, and it shows five numbers and four buttons.
+  Bundling React + the whole renderer into a 260x150 overlay would
+  make it slower to open and heavier to keep resident for no benefit.
+  It talks to the same WebSocket with the same auth token via the same
+  preload bridge.
+
+  Colors are copied from styles/theme.css rather than imported — same
+  reason. If the palette there changes, these four lines change too.
+-->
+<style>
+  :root {
+    --bg-card:        #14171b;
+    --border:         rgba(232, 147, 95, 0.15);
+    --text-primary:   #f5f5f5;
+    --text-secondary: #a3a3a3;
+    --text-dim:       #525252;
+    /* State colors — same mapping as theme.css */
+    --color-idle:      #e8935f;  /* amber  — locked and on target */
+    --color-drift:     #ef4444;  /* red    — drifting */
+    --color-deferred:  #3b82f6;  /* blue   — waiting to lock on */
+    --color-paused:    #525252;  /* dim    — paused */
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    background: transparent;
+    font-family: var(--font-mono);
+    overflow: hidden;
+    user-select: none;
+  }
+  #card {
+    width: 100%; height: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--accent, var(--color-idle));
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 8px;
+    /* The whole card is a drag handle except the buttons. */
+    -webkit-app-region: drag;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.55);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  #card.drifting { box-shadow: 0 0 0 1px var(--color-drift), 0 6px 20px rgba(0,0,0,0.6); }
+  .row { display: flex; align-items: baseline; justify-content: space-between; }
+  #time { font-size: 24px; font-weight: 700; color: var(--accent, var(--color-idle)); letter-spacing: 1px; }
+  #label { font-size: 10px; color: var(--text-secondary); max-width: 120px;
+           overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #meta { font-size: 9px; color: var(--text-dim); letter-spacing: 0.5px; }
+  #status { font-size: 9px; color: var(--accent, var(--color-idle)); letter-spacing: 1px; }
+  .controls { display: flex; gap: 5px; -webkit-app-region: no-drag; }
+  button {
+    flex: 1; padding: 5px 0;
+    background: transparent; color: var(--text-secondary);
+    border: 1px solid var(--border); border-radius: 5px;
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px;
+    cursor: pointer; transition: all 0.15s ease;
+  }
+  button:hover { color: var(--text-primary); border-color: var(--accent, var(--color-idle)); }
+  button:disabled { opacity: 0.3; cursor: default; }
+</style>
+</head>
+<body>
+  <div id="card">
+    <div class="row">
+      <span id="time">--:--</span>
+      <span id="label"></span>
+    </div>
+    <div class="row">
+      <span id="meta">no session</span>
+      <span id="status"></span>
+    </div>
+    <div class="controls">
+      <button id="lock"   title="Lock onto what you're actually working in">LOCK</button>
+      <button id="pause"  title="Pause / resume">PAUSE</button>
+      <button id="abort"  title="End the session">STOP</button>
+    </div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  var ws = null, state = null;
+
+  function send(msg) {
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg));
+  }
+
+  function connect() {
+    ws = new WebSocket("ws://localhost:8765");
+    ws.onopen = function () {
+      var token = (window.friday && window.friday.wsAuthToken) || "";
+      send({ cmd: "auth", token: token });
+      send({ cmd: "get_focus_status" });
+    };
+    ws.onmessage = function (ev) {
+      var data;
+      try { data = JSON.parse(ev.data); } catch (e) { return; }
+      if (data.event === "focus_status") render(data);
+    };
+    // Backend restarts shouldn't leave a dead card on screen forever.
+    ws.onclose = function () { setTimeout(connect, 2000); };
+    ws.onerror = function () { try { ws.close(); } catch (e) {} };
+  }
+
+  function two(n) { return (n < 10 ? "0" : "") + n; }
+
+  function render(s) {
+    state = s;
+    var card = document.getElementById("card");
+    var accent = "var(--color-idle)";
+    var status = "";
+
+    if (!s.active) {
+      document.getElementById("time").textContent = "--:--";
+      document.getElementById("meta").textContent = "no session";
+      document.getElementById("label").textContent = "";
+      document.getElementById("status").textContent = "";
+      card.classList.remove("drifting");
+      card.style.setProperty("--accent", accent);
+      document.getElementById("pause").disabled = true;
+      document.getElementById("abort").disabled = true;
+      return;
+    }
+
+    document.getElementById("pause").disabled = false;
+    document.getElementById("abort").disabled = false;
+
+    var mins = s.remaining_minutes || 0;
+    document.getElementById("time").textContent = two(Math.floor(mins / 60)) + ":" + two(mins % 60);
+    document.getElementById("label").textContent = s.label || "";
+
+    var bits = [s.drift_count + (s.drift_count === 1 ? " drift" : " drifts")];
+    if (typeof s.on_target_percent === "number") bits.push(s.on_target_percent + "% on target");
+    document.getElementById("meta").textContent = bits.join("  ·  ");
+
+    // Tint by state, most urgent first.
+    if (s.is_deferred)      { accent = "var(--color-deferred)"; status = "WAITING"; }
+    else if (s.paused)      { accent = "var(--color-paused)";   status = "PAUSED"; }
+    else if (s.drifting)    { accent = "var(--color-drift)";    status = "DRIFTING"; }
+    else if (s.screen_stuck){ accent = "var(--color-drift)";    status = "STUCK"; }
+    else                    { status = "LOCKED"; }
+
+    card.classList.toggle("drifting", !!s.drifting);
+    card.style.setProperty("--accent", accent);
+    document.getElementById("status").textContent = status;
+    document.getElementById("pause").textContent = s.paused ? "RESUME" : "PAUSE";
+  }
+
+  document.getElementById("lock").addEventListener("click", function () {
+    // source:"card" matters — clicking here makes THIS window frontmost,
+    // so the backend must read past FRIDAY's own windows instead of
+    // locking the card. See the card trap in actions/focus_session.py.
+    send({ cmd: "focus_control", action: "retarget", source: "card" });
+  });
+  document.getElementById("pause").addEventListener("click", function () {
+    send({ cmd: "focus_control", action: (state && state.paused) ? "resume" : "pause", source: "card" });
+  });
+  document.getElementById("abort").addEventListener("click", function () {
+    send({ cmd: "focus_control", action: "abort", source: "card" });
+  });
+
+  connect();
+})();
+</script>
+</body>
+</html>

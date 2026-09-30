@@ -1,0 +1,221 @@
+/* F.R.I.D.A.Y. — theme.css
+   Three switchable themes, same variable NAMES throughout — components
+   reference var(--panel-bg) etc. rather than hardcoded values, so
+   switching themes is just setting data-theme on <html> (see
+   ui/renderer/hooks/useTheme.js). Theme 1 (this :root block) is the
+   original "Systems Console" look, kept as-is for backward compat and
+   as the fallback if data-theme is ever unset. */
+
+:root, [data-theme="console"] {
+  /* ── Colors ─────────────────────────────────── */
+  --bg-primary:     #0b0d10;
+  --bg-secondary:   #0f1114;
+  --bg-card:        #14171b;
+  --bg-card-hover:  #1a1e23;
+  --border:         rgba(232, 147, 95, 0.15);
+  --border-bright:  rgba(232, 147, 95, 0.4);
+
+  /* Copper accent */
+  --amber:          #e8935f;
+  --amber-dim:      #a8623a;
+  --amber-glow:     rgba(232, 147, 95, 0.2);
+  --amber-glow-lg:  rgba(232, 147, 95, 0.08);
+  --accent:         #e8935f;
+  --accent-rgb:     232, 147, 95;
+
+  /* State colors — --state-color is kept live by useTheme.js (see
+     applyStateColor there), set to whichever of these matches the
+     current state. Only the "liquid" theme actually uses it. */
+  --color-idle:       #e8935f;   /* amber */
+  --color-listening:  #06b6d4;   /* cyan */
+  --color-thinking:   #3b82f6;   /* blue */
+  --color-speaking:   #10b981;   /* green */
+  --color-error:      #ef4444;   /* red */
+  --state-color:      var(--color-idle);
+
+  /* Text */
+  --text-primary:   #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --text-dim:       #525252;
+  --text-amber:     #e8935f;
+
+  /* ── Typography ─────────────────────────────── */
+  --font-mono:  'JetBrains Mono', 'Courier New', monospace;
+  --font-ui:    'Segoe UI', system-ui, sans-serif;
+
+  /* ── Spacing ────────────────────────────────── */
+  --radius-sm:  6px;
+  --radius-md:  12px;
+  --radius-lg:  20px;
+
+  /* ── Transitions ────────────────────────────── */
+  --transition: 0.2s ease;
+
+  /* ── Glass panel tokens — what Window/Taskbar/Settings/Toast/etc.
+     actually read. Theme 1's values match the existing "pushed glass"
+     pass exactly, so switching TO this theme changes nothing. ── */
+  --panel-bg:          rgba(16, 18, 22, 0.58);
+  --panel-bg-solid:     rgba(14, 16, 19, 0.68);   /* text-dense panels (transcript, settings) */
+  --panel-blur:        26px;
+  --panel-saturate:    150%;
+  --panel-border:      rgba(232, 147, 95, 0.18);
+  --panel-radius:      14px;
+  --panel-radius-lg:   16px;
+  --panel-shadow:      0 16px 40px rgba(0,0,0,0.5), 0 0 32px rgba(232,147,95,0.04);
+  --panel-highlight:   inset 0 1px 0 rgba(255,255,255,0.05);
+  --header-bg:         linear-gradient(180deg, rgba(232,147,95,0.09), rgba(232,147,95,0.03));
+  --taskbar-bg:        rgba(10,11,13,0.7);
+  --titlebar-bg:       rgba(10,11,13,0.55);
+  --input-bg:          rgba(10,11,13,0.65);
+  --select-bg:         rgba(255,255,255,0.04);
+  /* Liquid-only (ignored by this theme; kept here so components can
+     reference them unconditionally without an undefined-var fallback). */
+  --panel-sheen-opacity: 0;
+  --panel-tint: transparent;
+  --desktop-bg-image: radial-gradient(rgba(232,147,95,0.035) 1px, transparent 1px);
+  --desktop-bg-size: 24px 24px;
+}
+
+/* ── Theme 2: Liquid Glass ──────────────────────────────────────────
+   More translucent, more blur, panels tinted toward whatever FRIDAY's
+   current state color is (amber idle / cyan listening / blue thinking /
+   green speaking), plus a slow animated sheen sweeping across panels. */
+[data-theme="liquid"] {
+  --border:         rgba(232, 147, 95, 0.12);
+  --border-bright:  rgba(232, 147, 95, 0.35);
+  --accent:         var(--state-color);
+  --accent-rgb:     232, 147, 95; /* JS keeps this roughly in sync — see useTheme.js */
+
+  --panel-bg:          rgba(18, 16, 22, 0.42);
+  --panel-bg-solid:    rgba(16, 15, 20, 0.56);
+  --panel-blur:        34px;
+  --panel-saturate:    190%;
+  --panel-border:      color-mix(in srgb, var(--state-color) 30%, rgba(255,255,255,0.08));
+  --panel-radius:      20px;
+  --panel-radius-lg:   24px;
+  --panel-shadow:      0 20px 50px rgba(0,0,0,0.5), 0 0 46px color-mix(in srgb, var(--state-color) 18%, transparent);
+  --panel-highlight:   inset 0 1px 0 rgba(255,255,255,0.09);
+  --header-bg:         linear-gradient(180deg, color-mix(in srgb, var(--state-color) 22%, transparent), transparent);
+  --taskbar-bg:        rgba(14,12,18,0.5);
+  --titlebar-bg:       rgba(14,12,18,0.38);
+  --input-bg:          rgba(14,12,18,0.48);
+  --select-bg:         rgba(255,255,255,0.05);
+  --panel-sheen-opacity: 1;
+  --panel-tint: color-mix(in srgb, var(--state-color) 10%, transparent);
+  /* Deliberately richer than the other themes — panels here are much
+     more translucent, so the blur needs real texture behind it to read
+     as "glass" instead of just "slightly less dark". Three soft blobs
+     tinted toward the live state color, big enough that blur genuinely
+     distorts them rather than smoothing them to nothing. */
+  --desktop-bg-image:
+    radial-gradient(ellipse 700px 500px at 15% 20%, color-mix(in srgb, var(--state-color) 16%, transparent), transparent 60%),
+    radial-gradient(ellipse 600px 600px at 85% 70%, color-mix(in srgb, var(--state-color) 12%, transparent), transparent 60%),
+    radial-gradient(ellipse 500px 400px at 50% 95%, rgba(120,100,200,0.10), transparent 60%);
+  --desktop-bg-size: auto;
+}
+
+@keyframes friday-sheen {
+  0%   { transform: translateX(-50%) rotate(8deg); }
+  100% { transform: translateX(350%) rotate(8deg); }
+}
+
+/* One sweeping highlight per glass panel — panels opt in with the
+   .glass-sheen class (currently just Window.jsx, i.e. the Galaxy overlay
+   — Settings/ConfirmDialog deliberately don't use this: a moving beam
+   over form controls you're trying to read/click is bad UX regardless
+   of theme). Only visible on the liquid theme; --panel-sheen-opacity is
+   0 everywhere else, so this costs nothing (not even a repaint) there.
+   clip-path is redundant with overflow:hidden below on purpose — some
+   Chromium versions don't reliably clip a transform-animated child to
+   overflow:hidden when the SAME ancestor also has backdrop-filter and
+   border-radius active (the exact combination every glass panel here
+   has); clip-path clips in a different rendering stage and doesn't share
+   that bug, so it's the actual guarantee, not overflow:hidden. */
+.glass-sheen { position: relative; overflow: hidden; clip-path: inset(0 round var(--panel-radius, 14px)); }
+.glass-sheen::before {
+  content: "";
+  position: absolute;
+  top: -20%; left: 0;
+  width: 30%; height: 140%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    color-mix(in srgb, var(--state-color) 35%, transparent),
+    transparent
+  );
+  opacity: var(--panel-sheen-opacity);
+  animation: friday-sheen 9s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ── Theme 3: Minimal Glass ─────────────────────────────────────────
+   Lighter, quieter, bigger radii — closer to a system control center
+   than a HUD. Cooler neutral accent instead of amber; HUD-specific
+   decoration (corner brackets, scanline) hides via .hud-only below. */
+[data-theme="minimal"] {
+  --border:         rgba(255, 255, 255, 0.08);
+  --border-bright:  rgba(255, 255, 255, 0.18);
+  --accent:         #9BA6C4;
+  --accent-rgb:     155, 166, 196;
+  --amber:          #9BA6C4; /* components that still read --amber directly stay on-theme */
+
+  --panel-bg:          rgba(255, 255, 255, 0.055);
+  --panel-bg-solid:    rgba(30, 30, 34, 0.72);
+  --panel-blur:        22px;
+  --panel-saturate:    120%;
+  --panel-border:      rgba(255, 255, 255, 0.10);
+  --panel-radius:      22px;
+  --panel-radius-lg:   26px;
+  --panel-shadow:      0 12px 34px rgba(0,0,0,0.35);
+  --panel-highlight:   inset 0 1px 0 rgba(255,255,255,0.12);
+  --header-bg:         rgba(255,255,255,0.04);
+  --taskbar-bg:        rgba(20,20,24,0.55);
+  --titlebar-bg:       rgba(20,20,24,0.4);
+  --input-bg:          rgba(255,255,255,0.05);
+  --select-bg:         rgba(255,255,255,0.06);
+  --panel-sheen-opacity: 0;
+  --panel-tint: transparent;
+  --desktop-bg-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+  --desktop-bg-size: 28px 28px;
+}
+
+/* Decoration that's specifically part of the "systems console" HUD
+   identity (corner brackets, scanline sweep) — opt in with .hud-only
+   wherever that decoration actually lives, rather than deleting it, so
+   switching back to Theme 1 needs nothing re-added. */
+[data-theme="minimal"] .hud-only { display: none !important; }
+
+/* ── Scrollbar ───────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+/* ── Selection ───────────────────────────────────── */
+::selection { background: var(--amber-glow); color: var(--accent); }
+
+/* ── Utility classes ─────────────────────────────── */
+.glass {
+  background: var(--panel-bg);
+  backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  box-shadow: var(--panel-shadow), var(--panel-highlight);
+}
+
+.glass-panel {
+  background: var(--panel-bg-solid);
+  backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-saturate));
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  box-shadow: var(--panel-shadow), var(--panel-highlight);
+}
+
+.amber-glow {
+  box-shadow: 0 0 20px var(--amber-glow), 0 0 60px var(--amber-glow-lg);
+}
+
+.text-amber { color: var(--accent); }
+.text-dim   { color: var(--text-dim); }
+.text-mono  { font-family: var(--font-mono); }

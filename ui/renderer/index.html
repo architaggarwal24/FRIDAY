@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!--
+    'wasm-unsafe-eval' is required by @mediapipe/tasks-vision: the
+    landmarker runs as WebAssembly, and Chromium blocks
+    WebAssembly.instantiate under a script-src that doesn't allow it.
+    Without this the posture watch fails SILENTLY — exactly the
+    "nothing happens, no error" failure mode a blocked CDN script
+    produces. It permits compiling bundled .wasm; it does NOT permit
+    eval() of arbitrary JS.
+
+    blob: in script-src and child-src is for the MediaPipe worker.
+    'self' data: blob: in img-src/media-src covers the local video
+    element and the canvas frames it's analysed from — all local, no
+    remote origin is allowed anywhere here.
+
+    connect-src needs 'self' too, separately from script-src:
+    FilesetResolver/FaceLandmarker load the wasm binary and the .task
+    model via their own fetch() calls at runtime (see
+    PostureWatch.jsx), which falls under connect-src, not script-src —
+    without 'self' here those fetches are blocked, same silent-failure
+    shape as the wasm-unsafe-eval case above.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; child-src 'self' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:8765; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:;" />
+  <title>F.R.I.D.A.Y.</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #root {
+      width: 100%; height: 100%;
+      background: #0b0d10;
+      overflow: hidden;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>

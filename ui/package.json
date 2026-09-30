@@ -1,0 +1,39 @@
+{
+  "name": "friday-ui",
+  "version": "1.0.0",
+  "description": "F.R.I.D.A.Y. — Holographic HUD",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "webpack --config webpack.config.js"
+  },
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.1.0",
+    "@mediapipe/tasks-vision": "^0.10.14",
+    "3d-force-graph": "^1.73.0",
+    "framer-motion": "^11.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
+    "recharts": "^2.12.0",
+    "remark-gfm": "^4.0.1",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "@babel/preset-react": "^7.24.0",
+    "babel-loader": "^9.1.0",
+    "copy-webpack-plugin": "^14.0.0",
+    "css-loader": "^7.1.0",
+    "electron": "^41.3.0",
+    "html-webpack-plugin": "^5.6.0",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.0"
+  },
+  "allowScripts": {
+    "electron@41.10.7": true
+  }
+}
